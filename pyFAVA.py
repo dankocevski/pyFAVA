@@ -17,6 +17,9 @@ FAVApy.getData(week=1, sigma=6)
 import urllib.request
 import json 
 import numpy
+from astropy import units as u
+from astropy.coordinates import SkyCoord
+
 
 # Define the FAVA url
 fava_api_url = 'https://fermi.gsfc.nasa.gov/ssc/data/access/lat/FAVA/queryDB_2FAV.php'
@@ -172,15 +175,20 @@ def selectGalacticSources(dataCatalog, dgalb=10, return_index=False):
     galacticDataCatalog = DataCatalog()
 
     # Find the sources that are within +/- dgalb
-    index = numpy.where((dataCatalog['galb'] >= (-1*dgalb)) & (dataCatalog['galb'] <= dgalb))
+    best_ra = dataCatalog['best_ra']
+    best_dec = dataCatalog['best_dec']
+
+    skyCoordinate = SkyCoord(ra=best_ra *u.degree, dec=best_dec *u.degree, frame='fk5')
+    best_gall = skyCoordinate.galactic.l.value
+    best_galb = skyCoordinate.galactic.b.value
+
+    index = numpy.where((best_galb >= (-1*dgalb)) & (best_galb <= dgalb))
 
     # Loop through each of the variables in the dataCatalog and select only the galactic sources
     for key in dataCatalog.keys():
 
         # Fill the new data catalog
         galacticDataCatalog[key] = numpy.append(galacticDataCatalog[key], dataCatalog[key][index])
-
-
 
     print('\nSelected %s sources.\n' % len(galacticDataCatalog['flareID']))
 
